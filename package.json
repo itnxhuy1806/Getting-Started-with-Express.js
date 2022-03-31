@@ -20,7 +20,9 @@
   },
   "homepage": "https://github.com/nxhuy1806/Getting-Started-with-Express.js#readme",
   "dependencies": {
-    "express": "^4.17.3"
+    "express": "^4.17.3",
+    "fs": "^0.0.1-security",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
