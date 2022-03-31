@@ -17,16 +17,19 @@ fs.readFile('users.json', { encoding: 'utf8' }, function (err, data) {
 
 })
 app.engine('hbs', engines.handlebars)
+
 app.set('views', './views')
 app.set('view engine', 'hbs')
+
+app.use('/profilepics',express.static('images'))
+
 app.get('/', function (req, res) {
      res.render('index', { users: users })
 })
 
-
 app.get('/:username', function (req, res) {
      let username = req.params.username
-     res.send(username)
+     res.render('user', { username: username })
 })
 let server = app.listen(3000, function () {
      console.log('Server running at http://localhost:' + server.address().port)
