@@ -3,6 +3,8 @@ let app = express();
 
 let fs = require('fs')
 let _ = require('lodash')
+let engines = require('consolidate')
+// let engines = require('consolidate')
 let users = []
 
 fs.readFile('users.json', { encoding: 'utf8' }, function (err, data) {
@@ -14,22 +16,11 @@ fs.readFile('users.json', { encoding: 'utf8' }, function (err, data) {
      })
 
 })
+app.engine('hbs', engines.handlebars)
+app.set('views', './views')
+app.set('view engine', 'hbs')
 app.get('/', function (req, res) {
-     let buffer = ''
-     users.forEach(function (user) {
-          buffer += '<a href="/' + user.username + '">' + user.name.full + '<br>'
-     })
-     res.send(buffer)
-})
-
-app.get(/big.*/, function (req, res, next) {
-     console.log('BIG USER ACCESS')
-     next()
-})
-
-app.get(/.*dog.*/, function (req, res, next) {
-     console.log('DOGS GO WOOF')
-     next()
+     res.render('index', { users: users })
 })
 
 
