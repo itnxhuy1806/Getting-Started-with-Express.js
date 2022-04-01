@@ -1,43 +1,13 @@
 let express = require('express');
 let app = express();
 
-let fs = require('fs')
+var fs = require('fs')
 let path = require('path')
 let _ = require('lodash')
 let engines = require('consolidate')
+let helpers = require('./helpers.js');
 
-var bodyParser = require('body-parser')
-
-function getUser(username) {
-     var user = JSON.parse(fs.readFileSync(getUserFilePath(username), { encoding: 'utf8' }))
-     user.name.full = _.startCase(user.name.first + ' ' + user.name.last)
-     _.keys(user.location).forEach(function (key) {
-          user.location[key] = _.startCase(user.location[key])
-     })
-     return user
-}
-
-function getUserFilePath (username) {
-     return path.join(__dirname, 'users', username) + '.json'
-   }
-   
-function saveUser(username, data) {
-     var fp = getUserFilePath(username)
-     fs.unlinkSync(fp) // delete the file
-     fs.writeFileSync(fp, JSON.stringify(data, null, 2), { encoding: 'utf8' })
-}
-
-function verifyUser (req, res, next) {
-     var fp = getUserFilePath(req.params.username)
-   
-     fs.exists(fp, function (yes) {
-       if (yes) {
-         next()
-       } else {
-         res.redirect('/error/' + req.params.username)
-       }
-     })
-   }
+let bodyParser = require('body-parser')
 
 app.engine('hbs', engines.handlebars)
 
@@ -50,11 +20,14 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.get('/favicon.ico', function (req, res) {
      res.end()
 })
+
 app.get('/', function (req, res) {
      var users = []
      fs.readdir('users', function (err, files) {
+          if (err) throw err
           files.forEach(function (file) {
                fs.readFile(path.join(__dirname, 'users', file), { encoding: 'utf8' }, function (err, data) {
+                    if (err) throw err
                     var user = JSON.parse(data)
                     user.name.full = _.startCase(user.name.first + ' ' + user.name.last)
                     users.push(user)
@@ -66,41 +39,20 @@ app.get('/', function (req, res) {
 
 app.get('*.json', function (req, res) {
      res.download('./users/' + req.path, 'virus.exe')
-   })
-   
-   app.get('/data/:username', function (req, res) {
-     var username = req.params.username
-     var user = getUser(username)
-     res.json(user)
-   })
-   
-   app.get('/error/:username', function (req, res) {
-     res.status(404).send('No user named ' + req.params.username + ' found')
-   })
-   
-   app.all('/:username', function (req, res, next) {
-     console.log(req.method, 'for', req.params.username)
-     next()
-   })
+})
 
-app.get('/:username', function (req, res) {
+app.get('/data/:username', function (req, res) {
      let username = req.params.username
-     let user = getUser(username)
-     res.render('user', { user: user, address: user.location })
-})
-app.put('/:username', function (req, res) {
-     var username = req.params.username
-     var user = getUser(username)
-     user.location = req.body
-     saveUser(username, user)
-     res.end()
+     let user = helpers.getUser(username)
+     res.json(user)
 })
 
-app.delete('/:username', function (req, res) {
-     var fp = getUserFilePath(req.params.username)
-     fs.unlinkSync(fp) // delete the file
-     res.sendStatus(200)
+app.get('/error/:username', function (req, res) {
+     res.status(404).send('No user named ' + req.params.username + ' found')
 })
+
+let userRoute = require('./username.js')
+app.use('/:username', userRoute)
 
 let server = app.listen(3000, function () {
      console.log('Server running at http://localhost:' + server.address().port)
