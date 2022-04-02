@@ -5,8 +5,7 @@ var fs = require('fs')
 let path = require('path')
 let _ = require('lodash')
 let engines = require('consolidate')
-let helpers = require('./helpers.js');
-
+let JSONStream = require('JSONStream')
 let bodyParser = require('body-parser')
 
 app.engine('hbs', engines.handlebars)
@@ -43,8 +42,17 @@ app.get('*.json', function (req, res) {
 
 app.get('/data/:username', function (req, res) {
      let username = req.params.username
-     let user = helpers.getUser(username)
-     res.json(user)
+     let readable = fs.createReadStream('./users/'+username+'.json')
+     readable.pipe(res)
+})
+app.get('/data/by/:gender',function (req, res) {
+     let gender = req.params.gender
+     let readable = fs.createReadStream('./users.json')
+     readable.pipe(JSONStream.parse('*', function (user){
+          if(user.gender === gender) return user.name
+     }))
+     .pipe(JSONStream.stringify('[\n ', ' \n ','\n]\n'))
+     .pipe(res)
 })
 
 app.get('/error/:username', function (req, res) {
