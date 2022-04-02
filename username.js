@@ -6,12 +6,12 @@ let router = express.Router({
      mergeParams: true
 })
 
-router.all('/', function (req, res, next) {
-     console.log(req.method, 'for', req.params.username)
+router.use(function (req, res, next) {
+     console.log(req.method, 'for', req.params.username, req.path)
      next()
 })
 
-router.get('/', helpers.verifyUser, function (req, res) {
+router.get('/', function (req, res) {
      let username = req.params.username
      let user = helpers.getUser(username)
      res.render('user', {
@@ -19,7 +19,10 @@ router.get('/', helpers.verifyUser, function (req, res) {
           address: user.location
      })
 })
-
+router.use(function (err, req, res, next) {
+     console.error(err.stack)
+     res.status(500).send('Something broke!')
+})
 router.get('/edit', function (req, res) {
      res.send('You want to edit ' + req.params.username + '???')
 })
